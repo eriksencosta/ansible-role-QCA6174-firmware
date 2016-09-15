@@ -1,0 +1,64 @@
+---
+
+qcaf_debian_contrib_nonfree_repositories:
+  - "deb {{ qcaf_debian_repository_mirror }} stretch main non-free contrib"
+  - "deb-src {{ qcaf_debian_repository_mirror }} stretch main non-free contrib"
+  - deb http://security.debian.org/debian-security stretch/updates main contrib non-free
+  - deb-src http://security.debian.org/debian-security stretch/updates main contrib non-free
+
+qcaf_packages:
+  - firmware-linux
+  - firmware-linux-free
+  - firmware-linux-nonfree
+  - firmware-atheros
+
+# The firmware files available in the firmware-atheros package don't work. Errors like the following are thrown:
+#
+#   [    1.787449] ath10k_pci 0000:07:00.0: Direct firmware load for ath10k/QCA6174/hw3.0/firmware-5.bin failed with error -2
+#
+# Kalo Valo's fork has the working firmware files.
+#
+# See: https://bbs.archlinux.org/viewtopic.php?id=208874
+qcaf_wifi_firmware:
+  directory: /lib/firmware/ath10k/QCA6174/hw3.0
+  downloads:
+    - {
+      url: "https://github.com/kvalo/ath10k-firmware/raw/3cce88e245f2d685e49411c4f80998f94baf67b8/QCA6174/hw3.0/board.bin",
+      filename: board.bin
+    }
+    - {
+      url: "https://github.com/kvalo/ath10k-firmware/raw/3cce88e245f2d685e49411c4f80998f94baf67b8/QCA6174/hw3.0/board-2.bin",
+      filename: board-2.bin
+    }
+    - {
+      url: "https://github.com/kvalo/ath10k-firmware/raw/3cce88e245f2d685e49411c4f80998f94baf67b8/QCA6174/hw3.0/firmware-4.bin_WLAN.RM.2.0-00180-QCARMSWPZ-1",
+      filename: firmware-4.bin
+    }
+  # The system tries to load the firmware-5.bin file. We symlink to the firmware-4.bin file and the error is gone.
+  symlink:
+    dest: firmware-5.bin
+    src: firmware-4.bin
+  modprobe:
+    contents: options ath10k_core skip_otp=y
+    path: /etc/modprobe.d/ath10k.conf
+
+# Similar to the WiFi firmware, the default files don't work:
+#
+#   [    4.867354] bluetooth hci0: firmware: failed to load qca/rampatch_usb_00000302.bin (-2)
+#   [    4.867379] bluetooth hci0: Direct firmware load for qca/rampatch_usb_00000302.bin failed with error -2
+#   [    4.867381] Bluetooth: hci0: failed to request rampatch file: qca/rampatch_usb_00000302.bin (-2)
+#   [    5.211081] bluetooth hci0: firmware: failed to load qca/rampatch_usb_00000302.bin (-2)
+#   [    5.211084] bluetooth hci0: Direct firmware load for qca/rampatch_usb_00000302.bin failed with error -2
+#
+# Get the firmware files from the kernel.org repository.
+qcaf_bluetooth_firmware:
+  directory: /lib/firmware/qca
+  downloads:
+    - {
+      url: "https://git.kernel.org/cgit/linux/kernel/git/firmware/linux-firmware.git/plain/qca/rampatch_usb_00000302.bin?id=70a3c2adcce7c51e4f26e929d666237904f6fd31",
+      filename: rampatch_usb_00000302.bin
+    }
+    - {
+      url: "https://git.kernel.org/cgit/linux/kernel/git/firmware/linux-firmware.git/plain/qca/nvm_usb_00000302.bin?id=70a3c2adcce7c51e4f26e929d666237904f6fd31",
+      filename: nvm_usb_00000302.bin
+    }

@@ -1,0 +1,74 @@
+---
+
+- name: Create a backup of the source.list file.
+  shell: cp /etc/apt/sources.list /etc/apt/sources.list.original; rm /etc/apt/sources.list
+  args:
+    creates: /etc/apt/sources.list.original
+
+- name: Enable contrib and non-free packages.
+  lineinfile:
+    dest: /etc/apt/sources.list
+    line: "{{ item }}"
+    create: yes
+    state: present
+  with_items: "{{ qcaf_debian_contrib_nonfree_repositories }}"
+
+- name: Update apt cache.
+  apt:
+    update_cache: yes
+
+- name: Install packages.
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ qcaf_packages }}"
+
+- name: Update PCIIDs.
+  shell: update-pciids
+
+- name: Delete the WiFi drivers directory.
+  file:
+    path: "{{ qcaf_wifi_firmware.directory }}"
+    state: absent
+
+- name: Create the WiFi drivers directory.
+  file:
+    path: "{{ qcaf_wifi_firmware.directory }}"
+    mode: 0755
+    state: directory
+
+- name: Download the working WiFi firmware.
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ qcaf_wifi_firmware.directory }}/{{ item.filename }}"
+  with_items: "{{ qcaf_wifi_firmware.downloads }}"
+
+- name: Symlink WiFi firmware files.
+  file:
+    dest: "{{ qcaf_wifi_firmware.directory }}/{{ qcaf_wifi_firmware.symlink.dest }}"
+    src:  "{{ qcaf_wifi_firmware.directory }}/{{ qcaf_wifi_firmware.symlink.src }}"
+    state: link
+
+- name: Configure WiFi firmware loading.
+  lineinfile:
+    dest: "{{ qcaf_wifi_firmware.modprobe.path }}"
+    line: "{{ qcaf_wifi_firmware.modprobe.contents }}"
+    create: true
+    state: present
+
+- name: Delete the Bluetooth firmmware directory.
+  file:
+    path: "{{ qcaf_bluetooth_firmware.directory }}"
+    state: absent
+
+- name: Create the Bluetooth firmware directory.
+  file:
+    path: "{{ qcaf_bluetooth_firmware.directory }}"
+    mode: 0755
+    state: directory
+
+- name: Download the Bluetooth firmware.
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ qcaf_bluetooth_firmware.directory }}/{{ item.filename }}"
+  with_items: "{{ qcaf_bluetooth_firmware.downloads }}"

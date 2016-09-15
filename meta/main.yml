@@ -1,0 +1,18 @@
+galaxy_info:
+  author: Eriksen Costa
+  description: Installs working firmware binaries for the Qualcomm QCA6147 wireless card
+  license: Apache License, Version 2.0
+  min_ansible_version: 2.0
+
+  platforms:
+    - name: Debian
+      versions:
+        - stretch
+
+  galaxy_tags:
+    - atheros
+    - bluetooth
+    - networking
+    - wireless
+
+dependencies: []
